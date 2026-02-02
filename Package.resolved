@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "M3U8Parser",
+        "repositoryURL": "https://github.com/M3U8Kit/M3U8Parser.git",
+        "state": {
+          "branch": null,
+          "revision": "f7965520f3f8b31ee3a9329739623995a91cc789",
+          "version": "1.1.0"
+        }
+      },
+      {
+        "package": "SwiftProtobuf",
+        "repositoryURL": "https://github.com/apple/swift-protobuf",
+        "state": {
+          "branch": null,
+          "revision": "9f0c76544701845ad98716f3f6a774a892152bcb",
+          "version": "1.26.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}
