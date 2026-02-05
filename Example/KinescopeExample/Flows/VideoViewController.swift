@@ -11,6 +11,7 @@ final class VideoViewController: UIViewController {
 
     private var player: KinescopePlayer?
     private var downloadBarButtonItem: UIBarButtonItem?
+    private var deleteBarButtonItem: UIBarButtonItem?
     private var isDownloading = false
 
     var videoId: String = ""
@@ -31,7 +32,7 @@ final class VideoViewController: UIViewController {
         super.viewDidLoad()
 
         navigationController?.delegate = self
-        setupDownloadButton()
+        setupBarButtons()
         Kinescope.shared.videoDownloader.add(delegate: self)
 
         if uiEnabled {
@@ -72,19 +73,43 @@ final class VideoViewController: UIViewController {
         Kinescope.shared.videoDownloader.remove(delegate: self)
     }
 
-    private func setupDownloadButton() {
-        let title = NSLocalizedString("Download", comment: "Download video button")
-        let button = UIBarButtonItem(
-            title: title,
+    private func setupBarButtons() {
+        let downloadTitle = NSLocalizedString("Download", comment: "")
+        let downloadButton = UIBarButtonItem(
+            title: downloadTitle,
             style: .plain,
             target: self,
             action: #selector(downloadTapped)
         )
         if #available(iOS 13.0, *) {
-            button.image = UIImage(systemName: "arrow.down.circle")
+            downloadButton.image = UIImage(systemName: "arrow.down.circle")
         }
-        downloadBarButtonItem = button
-        navigationItem.rightBarButtonItem = button
+        downloadBarButtonItem = downloadButton
+
+        let deleteTitle = NSLocalizedString("Delete", comment: "")
+        let deleteButton = UIBarButtonItem(
+            title: deleteTitle,
+            style: .plain,
+            target: self,
+            action: #selector(deleteTapped)
+        )
+        if #available(iOS 13.0, *) {
+            deleteButton.image = UIImage(systemName: "trash")
+        }
+        deleteBarButtonItem = deleteButton
+
+        updateBarButtons()
+    }
+
+    private func updateBarButtons() {
+        let downloaded = Kinescope.shared.videoDownloader.isDownloaded(videoId: videoId)
+        downloadBarButtonItem?.isEnabled = !isDownloading
+        downloadBarButtonItem?.title = isDownloading ? nil : NSLocalizedString("Download", comment: "")
+        var items: [UIBarButtonItem] = [downloadBarButtonItem!]
+        if downloaded {
+            items.append(deleteBarButtonItem!)
+        }
+        navigationItem.rightBarButtonItems = items
     }
 
     @objc private func downloadTapped() {
@@ -103,10 +128,16 @@ final class VideoViewController: UIViewController {
 
     private func startDownload(video: KinescopeVideo) {
         if Kinescope.shared.videoDownloader.isDownloaded(videoId: video.id) {
-            showAlert(
+            let alert = UIAlertController(
                 title: NSLocalizedString("Saved", comment: ""),
-                message: NSLocalizedString("This video is already saved for offline.", comment: "")
+                message: NSLocalizedString("This video is already saved for offline.", comment: ""),
+                preferredStyle: .alert
             )
+            alert.addAction(UIAlertAction(title: NSLocalizedString("OK", comment: ""), style: .default))
+            alert.addAction(UIAlertAction(title: NSLocalizedString("Delete", comment: ""), style: .destructive) { [weak self] _ in
+                self?.performDelete()
+            })
+            present(alert, animated: true)
             return
         }
 
@@ -123,6 +154,35 @@ final class VideoViewController: UIViewController {
     private func updateDownloadButton(title: String?, enabled: Bool) {
         downloadBarButtonItem?.title = title
         downloadBarButtonItem?.isEnabled = enabled
+    }
+
+    @objc private func deleteTapped() {
+        let alert = UIAlertController(
+            title: NSLocalizedString("Delete", comment: ""),
+            message: NSLocalizedString("Remove this video from device?", comment: ""),
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: NSLocalizedString("Cancel", comment: ""), style: .cancel))
+        alert.addAction(UIAlertAction(title: NSLocalizedString("Delete", comment: ""), style: .destructive) { [weak self] _ in
+            self?.performDelete()
+        })
+        present(alert, animated: true)
+    }
+
+    private func performDelete() {
+        let deleted = Kinescope.shared.videoDownloader.delete(videoId: videoId)
+        if deleted {
+            updateBarButtons()
+            showAlert(
+                title: NSLocalizedString("Deleted", comment: ""),
+                message: NSLocalizedString("Video removed from device.", comment: "")
+            )
+        } else {
+            showAlert(
+                title: NSLocalizedString("Error", comment: ""),
+                message: NSLocalizedString("Could not delete video.", comment: "")
+            )
+        }
     }
 
     private func showAlert(title: String, message: String) {
@@ -189,6 +249,7 @@ extension VideoViewController: KinescopeVideoDownloadableDelegate {
         DispatchQueue.main.async { [weak self] in
             self?.isDownloading = false
             self?.updateDownloadButton(title: NSLocalizedString("Download", comment: ""), enabled: true)
+            self?.updateBarButtons()
             self?.showAlert(
                 title: NSLocalizedString("Saved", comment: ""),
                 message: NSLocalizedString("Video saved for offline playback.", comment: "")
