@@ -1,10 +1,3 @@
-//
-//  AssetService.swift
-//  KinescopeSDK
-//
-//  Created by Artemii Shabanov on 07.04.2021.
-//
-
 import AVFoundation
 
 protocol AssetServiceDelegate: AnyObject {
@@ -24,13 +17,9 @@ protocol AssetService {
 
 class AssetNetworkService: NSObject, AssetService {
 
-    // MARK: - Constants
-
     private enum Constants {
         static let downloadIdentifier = "io.kinescope.asset_download_session"
     }
-
-    // MARK: - Properties
 
     weak var delegate: AssetServiceDelegate?
     private let idsStorage: IDsStorage
@@ -38,8 +27,6 @@ class AssetNetworkService: NSObject, AssetService {
     private var drmHandlers: [String: DataProtectionHandler] = [:]
     private lazy var session: AVAssetDownloadURLSession = {
         let configuration = URLSessionConfiguration.background(withIdentifier: Constants.downloadIdentifier)
-
-        // Create a new AVAssetDownloadURLSession
         let downloadSession = AVAssetDownloadURLSession(configuration: configuration,
                                                         assetDownloadDelegate: self,
                                                         delegateQueue: nil)
@@ -47,22 +34,16 @@ class AssetNetworkService: NSObject, AssetService {
         return downloadSession
     }()
 
-    // MARK: - Lyfecycle
-
     init(idsStorage: IDsStorage = IDsUDStorage(), drmFactory: DataProtectionHandlerFactory? = nil) {
         self.idsStorage = idsStorage
         self.drmFactory = drmFactory
     }
-
-    // MARK: - Internal Methods
 
     func setSession(_ session: AVAssetDownloadURLSession) {
         self.session = session
     }
 
 }
-
-// MARK: - AssetService
 
 extension AssetNetworkService {
 
@@ -94,7 +75,6 @@ extension AssetNetworkService {
     func dequeueDownload(assetId: String) {
         findTask(by: assetId) { [weak self] task in
             self?.idsStorage.deleteID(by: task.urlAsset.url.absoluteString)
-            // Clean up DRM handler
             self?.drmHandlers.removeValue(forKey: assetId)
             task.cancel()
         } notFoundCompletion: { [weak self] in
@@ -104,7 +84,6 @@ extension AssetNetworkService {
 
     func restore() {
         session.getAllTasks { [weak self] tasksArray in
-            // For each task, restore the state in the app
             for task in tasksArray {
                 guard let downloadTask = task as? AVAssetDownloadTask else { continue }
                 if self?.idsStorage.contains(url: downloadTask.urlAsset.url.absoluteString) ?? false {
@@ -116,8 +95,6 @@ extension AssetNetworkService {
 
 }
 
-// MARK: - AVAssetDownloadDelegate
-
 extension AssetNetworkService: AVAssetDownloadDelegate {
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
@@ -128,7 +105,6 @@ extension AssetNetworkService: AVAssetDownloadDelegate {
         else {
             return
         }
-        // Clean up DRM handler on error
         drmHandlers.removeValue(forKey: id)
         delegate?.downloadError(assetId: id, error: .unknown(error))
     }
@@ -137,7 +113,6 @@ extension AssetNetworkService: AVAssetDownloadDelegate {
         guard let id = idsStorage.deleteID(by: assetDownloadTask.urlAsset.url.absoluteString) else {
             return
         }
-        // Clean up DRM handler
         drmHandlers.removeValue(forKey: id)
         delegate?.downloadComplete(assetId: id, path: location.relativePath)
     }
@@ -151,11 +126,8 @@ extension AssetNetworkService: AVAssetDownloadDelegate {
             return
         }
         var percentComplete = 0.0
-        // Iterate through the loaded time ranges
         for value in loadedTimeRanges {
-            // Unwrap the CMTimeRange from the NSValue
             let loadedTimeRange = value.timeRangeValue
-            // Calculate the percentage of the total expected asset duration
             percentComplete += loadedTimeRange.duration.seconds / timeRangeExpectedToLoad.duration.seconds
         }
         percentComplete *= 100
@@ -163,8 +135,6 @@ extension AssetNetworkService: AVAssetDownloadDelegate {
     }
 
 }
-
-// MARK: - Private
 
 private extension AssetNetworkService {
 
@@ -192,23 +162,16 @@ private extension AssetNetworkService {
 
     func startTask(assetId: String, url: URL, video: KinescopeVideo?) {
         let asset = AVURLAsset(url: url)
-        
-        // Setup DRM if video has DRM protection
         if let video = video, let drmFactory = drmFactory, video.drm != nil {
             if let drmHandler = drmFactory.provide(for: video) {
                 drmHandler.bind(with: asset)
-                // Store handler to keep it alive during download
                 drmHandlers[assetId] = drmHandler
             }
         }
-
-        // Create new AVAssetDownloadTask for the desired asset
         let downloadTask = session.makeAssetDownloadTask(asset: asset,
                                                          assetTitle: "io.kinescope.\(url.absoluteString)",
                                                          assetArtworkData: nil,
                                                          options: nil)
-
-        // Start task and begin download
         downloadTask?.resume()
     }
 

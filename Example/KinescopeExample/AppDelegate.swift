@@ -1,10 +1,3 @@
-//
-//  AppDelegate.swift
-//  KinescopeExample
-//
-//  Created by Никита Коробейников on 20.03.2021.
-//
-
 import UIKit
 import KinescopeSDK
 import AVFoundation

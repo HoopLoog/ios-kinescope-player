@@ -1,13 +1,4 @@
-//
-//  Manager+KinescopeConfigurable.swift
-//  KinescopeSDK
-//
-//  Created by Никита Коробейников on 23.03.2021.
-//
-
 import Foundation
-
-// MARK: - KinescopeConfigurable
 
 extension Manager: KinescopeConfigurable {
 

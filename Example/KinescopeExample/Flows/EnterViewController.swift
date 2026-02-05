@@ -1,22 +1,10 @@
-//
-//  EnterViewController.swift
-//  KinescopeExample
-//
-//  Created by Nikita Korobeinikov on 13.03.2024.
-//
-
 import UIKit
 
 final class EnterViewController: UIViewController {
 
-    // MARK: - IBOutlets
-
     @IBOutlet weak var field: UITextField!
     @IBOutlet weak var uiSwitch: UISwitch!
 
-    // MARK: - Private properties
-
-    // Change this id to your video id from dashboard. This one is free video for demo of SDK only.
     private let initialVideoId: String = {
 #if targetEnvironment(simulator)
         "9L8KmbNuhQSxQofn5DR4Vg"
@@ -24,8 +12,6 @@ final class EnterViewController: UIViewController {
         "b6a0ce69-3135-496d-8064-c8ed51ac4b2e"
 #endif
     }()
-
-    // MARK: - Lifecycle
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -43,15 +29,11 @@ final class EnterViewController: UIViewController {
         destination.uiEnabled = uiSwitch.isOn
     }
 
-    // MARK: - Actions
-
     @IBAction func didTapPlay(_ sender: Any) {
         tryToPlay()
     }
     
 }
-
-// MARK: - Private
 
 private extension EnterViewController {
     

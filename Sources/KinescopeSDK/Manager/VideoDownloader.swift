@@ -1,24 +1,11 @@
-//
-//  VideoDownloader.swift
-//  KinescopeSDK
-//
-//  Created by Artemii Shabanov on 13.04.2021.
-//
-
 import Foundation
 
-// MARK: - KinescopeVideoDownloadable
-
 class VideoDownloader: KinescopeVideoDownloadable {
-
-    // MARK: - Properties
 
     private var delegates: [KinescopeVideoDownloadableDelegate] = []
 
     private let videoPathsStorage: KinescopeVideoPathsStorage
     private var assetService: AssetService
-
-    // MARK: - Initialisation
 
     init(videoPathsStorage: KinescopeVideoPathsStorage,
          assetService: AssetService) {
@@ -26,8 +13,6 @@ class VideoDownloader: KinescopeVideoDownloadable {
         self.assetService = assetService
         self.assetService.delegate = self
     }
-
-    // MARK: - KinescopeDownloadable
 
     func enqueueDownload(videoId: String, url: URL) {
         assetService.enqueueDownload(assetId: videoId, url: url, video: nil)
@@ -93,8 +78,6 @@ class VideoDownloader: KinescopeVideoDownloadable {
     }
 
 }
-
-// MARK: - AssetServiceDelegate
 
 extension VideoDownloader: AssetServiceDelegate {
 
